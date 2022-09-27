@@ -1,96 +1,139 @@
-const listItems = [];
+const listsContainer = document.querySelector('[data-lists]')
+const newListForm = document.querySelector('[data-new-list-form]')
+const newListInput = document.querySelector('[data-new-list-input')
+const deleteListButton = document.querySelector('[data-delete-list-button]')
+const listDisplayContainer = document.querySelector('[data-list-display-container]')
+const listTitleElement = document.querySelector('[data-list-title]')
+const listCountElement = document.querySelector('[data-list-count]')
+const tasksContainer = document.querySelector('[data-tasks]')
+const taskTemplate = document.getElementById('task-template')
+const newTaskForm = document.querySelector('[data-new-task-form')
+const newTaskInput = document.querySelector('[data-new-task-input')
+const clearCompleteTaskButton = document.querySelector('[data-clear-complete-tasks-button]')
 
-function showTodo(todo) {
-    localStorage.setItem('listItems', JSON.stringify(listItems))
+const local_storage_list_key = 'task.lists'
+const local_storage_list_id_key = 'task.selectedListId'
+let lists = JSON.parse(localStorage.getItem(local_storage_list_key)) || []
+let selectedListId = localStorage.getItem(local_storage_list_id_key)
 
-    const list = document.querySelector('.list-group-flush');
-    const item = document.querySelector(`[data-key='${todo.id}']`);
-
-    if (todo.deleted) {
-        item.remove();
-        if (listItems.length === 0) list.innerHTML = '';
-        return
-    }
-
-    const isChecked = todo.checked ? 'done': '';
-    const node = document.createElement("li");
-    node.setAttribute('class', `todo-item ${isChecked}`);
-    node.setAttribute('data-key', todo.id);
-    node.innerHTML = `
-    <input id="${todo.id}" type="checkbox"/>
-    <label for="${todo.id}" class="tick js-tick"></label>
-    <span>${todo.text}</span>
-    <button class="delete-todo js-delete-todo">
-        <i class="bi bi-trash"></i>
-    </button>
-    `;
-
-    list.append(node);
-}
-
-function addTodo(text) {
-    const todo = {
-        text,
-        checked: false,
-        id: Date.now(),
-    };
-
-    listItems.push(todo);
-    showTodo(todo)
-}
-
-function toggleDone(key) {
-    const index = listItems.findIndex(item => item.id === Number(key));
-    listItems[index].checked = !listItems[index].checked;
-  
-    showTodo(listItems[index])
-    localStorage.setItem('listItems', JSON.stringify(listItems));
-  }
-  
-function deleteTodo(key) {
-    const index = listItems.findIndex(item => item.id === Number(key));
-    const todo = {
-        deleted: true,
-        ...listItems[index]
-    }
-    todo.deleted = true
-    listItems = listItems.filter(item => item.id !== Number(key));
-    showTodo(todo);
-}
-
-const form = document.querySelector('.ListItems');
-form.addEventListener('submit', event => {
-    event.preventDefault();
-
-    const input = document.querySelector('.ListItemInput');
-
-    const text = input.value.trim();
-    if (text !== '') {
-        addTodo(text);
-        input.value = '';
-        input.focus();
+listsContainer.addEventListener('click', e => {
+    if (e.target.tagName.toLowerCase() === 'li') {
+        selectedListId = e.target.dataset.listId
+        saveAndRender()
     }
 })
 
-const list = document.querySelector('.list-group-flush');
-list.addEventListener('click', event => {
-    if (event.target.classList.contains('js-tick')) {
-        const itemKey = event.target.parentElement.dataset.key;
-        toggleDone(itemKey);
-  }
-
-    if (event.target.classList.contains('js-delete-todo')) {
-        const itemKey = event.target.parentElement.dataset.key;
-        deleteTodo(itemKey);
-  }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const ref = localStorage.getItem('listItems');
-    if (ref) {
-        listItems = JSON.parse(ref);
-        listItems.forEach(t => {
-            showTodo(t);
-        });
+tasksContainer.addEventListener('click', e => {
+    if (e.target.tagName.toLowerCase() === 'input') {
+        const selectedList = list.find(list => list.id === selectedListId)
+        const selectedTask = selectedList.tasks.find(task => task.id === e.target.id)
+        selectedTask.complete = e.target.checked
+        save()
+        renderTaskCount(selectedList)
     }
-});
+})
+
+clearCompleteTaskButton.addEventListener('click', e => {
+    const selectedList = lists.find(list => list.id === selectedListId)
+    selectedList.tasks = selectedList.tasks.filter(task => !task.complete)
+    saveAndRender()
+})
+
+deleteListButton.addEventListener('click', e => {
+    lists = lists.filter(list => list.id !== selectedListId)
+    selectedListId = null
+    saveAndRender()
+})
+
+newListForm.addEventListener('submit', e => {
+    e.preventDefault()
+    const listName = newListInput.value
+    if (listName == null || listName === '') return
+    const list = createList(listName)
+    newListInput.value = null
+    lists.push(list)
+    saveAndRender()
+})
+
+newTaskForm.addEventListener('submit', e => {
+    e.preventDefault()
+    const taskName = newTaskInput.value
+    if (taskName == null || taskName === '') return
+    const task = createTask(taskName)
+    newTaskInput.value = null
+    const selectedList = lists.find(list => list.id === selectedListId)
+    selectedList.tasks.push(task)
+    saveAndRender()
+})
+
+function createList(name) {
+    return {id: Date.now().toString(), name: name, tasks: [] }
+}
+
+function createTask(name) {
+    return {id: Date.now().toString(), name: name, complete: false }
+}
+
+function saveAndRender() {
+    save()
+    render()
+}
+
+function save() {
+    localStorage.setItem(local_storage_list_key, JSON.stringify(lists))
+    localStorage.setItem(local_storage_list_id_key, selectedListId)
+}
+
+function render() {
+    clearElement(listsContainer)
+    renderLists()
+
+    const selectedList = lists.find(list => list.id === selectedListId)
+    if (selectedListId == null) {
+        listDisplayContainer.style.display = 'none'
+    } else {
+        listDisplayContainer.style.display = ''
+        listTitleElement.innerText = selectedList.name
+        renderTaskCount(selectedList)
+        clearElement(tasksContainer)
+        renderTasks(selectedList)
+    }
+}
+
+function renderTasks(selectedList) {
+    selectedList.tasks.forEach(task => {
+        const taskElement = document.importNode(taskTemplate.content, true)
+        const checkbox = taskElement.querySelector('input')
+        checkbox.id = task.id
+        checkbox.checked = task.complete
+        const label = taskElement.querySelector('label')
+        label.htmlFor = task.id
+        label.append(task.name)
+        tasksContainer.appendChild(taskElement)
+    })
+}
+
+function renderTaskCount(selectedList) {
+    const incompleteTasksCount = selectedList.tasks.filter(task => !task.complete).length
+    const taskString = incompleteTasksCount === 1 ? "task" : "tasks"
+    listCountElement.innerText = `${incompleteTasksCount} ${taskString} remaining`
+}
+
+function renderLists() {
+    lists.forEach(list => {
+        const listElement = document.createElement('li')
+        listElement.dataset.id = list.id
+        listElement.classList.add('list-name')
+        listElement.innerText = list.name
+        if (list.id === selectedListId) {
+            listElement.classList.add('active-list')
+        }
+        listsContainer.appendChild(listElement)
+    })
+}
+
+function clearElement(element) {
+    while (element.firstChild) {
+        element.removeChild(element.firstChild)
+    }
+}
