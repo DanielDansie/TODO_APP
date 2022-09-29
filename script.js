@@ -1,3 +1,5 @@
+const { Button } = require("bootstrap")
+
 const listsContainer = document.querySelector('[data-lists]')
 const newListForm = document.querySelector('[data-new-list-form]')
 const newListInput = document.querySelector('[data-new-list-input')
@@ -7,8 +9,8 @@ const listTitleElement = document.querySelector('[data-list-title]')
 const listCountElement = document.querySelector('[data-list-count]')
 const tasksContainer = document.querySelector('[data-tasks]')
 const taskTemplate = document.getElementById('task-template')
-const newTaskForm = document.querySelector('[data-new-task-form')
-const newTaskInput = document.querySelector('[data-new-task-input')
+const newTaskForm = document.querySelector('[data-new-task-form]')
+const newTaskInput = document.querySelector('[data-new-task-input]')
 const clearCompleteTaskButton = document.querySelector('[data-clear-complete-tasks-button]')
 
 const local_storage_list_key = 'task.lists'
@@ -18,14 +20,15 @@ let selectedListId = localStorage.getItem(local_storage_list_id_key)
 
 listsContainer.addEventListener('click', e => {
     if (e.target.tagName.toLowerCase() === 'li') {
-        selectedListId = e.target.dataset.listId
+        selectedListId = e.target.id
+        console.log("listsContainer: " + selectedListId)
         saveAndRender()
     }
 })
 
 tasksContainer.addEventListener('click', e => {
     if (e.target.tagName.toLowerCase() === 'input') {
-        const selectedList = list.find(list => list.id === selectedListId)
+        const selectedList = lists.find(list => list.id === selectedListId)
         const selectedTask = selectedList.tasks.find(task => task.id === e.target.id)
         selectedTask.complete = e.target.checked
         save()
@@ -76,6 +79,7 @@ function createTask(name) {
 
 function saveAndRender() {
     save()
+    console.log("saveAndRender: " + selectedListId)
     render()
 }
 
@@ -87,8 +91,10 @@ function save() {
 function render() {
     clearElement(listsContainer)
     renderLists()
-
+    console.log(lists)
     const selectedList = lists.find(list => list.id === selectedListId)
+    console.log("render: " + selectedListId)
+    console.log(selectedList)
     if (selectedListId == null) {
         listDisplayContainer.style.display = 'none'
     } else {
@@ -122,7 +128,7 @@ function renderTaskCount(selectedList) {
 function renderLists() {
     lists.forEach(list => {
         const listElement = document.createElement('li')
-        listElement.dataset.id = list.id
+        listElement.id = list.id
         listElement.classList.add('list-name')
         listElement.innerText = list.name
         if (list.id === selectedListId) {
@@ -137,3 +143,5 @@ function clearElement(element) {
         element.removeChild(element.firstChild)
     }
 }
+
+document.addEventListener('DOMContentLoaded', render())
