@@ -1,4 +1,4 @@
-const { Button } = require("bootstrap")
+// const { Button } = require("bootstrap")
 
 const listsContainer = document.querySelector('[data-lists]')
 const newListForm = document.querySelector('[data-new-list-form]')
@@ -12,6 +12,7 @@ const taskTemplate = document.getElementById('task-template')
 const newTaskForm = document.querySelector('[data-new-task-form]')
 const newTaskInput = document.querySelector('[data-new-task-input]')
 const clearCompleteTaskButton = document.querySelector('[data-clear-complete-tasks-button]')
+const taskItem = document.querySelector('[data-task-item]')
 
 const local_storage_list_key = 'task.lists'
 const local_storage_list_id_key = 'task.selectedListId'
@@ -21,7 +22,6 @@ let selectedListId = localStorage.getItem(local_storage_list_id_key)
 listsContainer.addEventListener('click', e => {
     if (e.target.tagName.toLowerCase() === 'li') {
         selectedListId = e.target.id
-        console.log("listsContainer: " + selectedListId)
         saveAndRender()
     }
 })
@@ -47,6 +47,8 @@ deleteListButton.addEventListener('click', e => {
     selectedListId = null
     saveAndRender()
 })
+
+
 
 newListForm.addEventListener('submit', e => {
     e.preventDefault()
@@ -79,7 +81,6 @@ function createTask(name) {
 
 function saveAndRender() {
     save()
-    console.log("saveAndRender: " + selectedListId)
     render()
 }
 
@@ -91,10 +92,7 @@ function save() {
 function render() {
     clearElement(listsContainer)
     renderLists()
-    console.log(lists)
     const selectedList = lists.find(list => list.id === selectedListId)
-    console.log("render: " + selectedListId)
-    console.log(selectedList)
     if (selectedListId == null) {
         listDisplayContainer.style.display = 'none'
     } else {
@@ -110,12 +108,50 @@ function renderTasks(selectedList) {
     selectedList.tasks.forEach(task => {
         const taskElement = document.importNode(taskTemplate.content, true)
         const checkbox = taskElement.querySelector('input')
+        const taskName = task.name
         checkbox.id = task.id
         checkbox.checked = task.complete
         const label = taskElement.querySelector('label')
         label.htmlFor = task.id
-        label.append(task.name)
+        const taskInput = document.createElement('span')
+        // taskInput.setAttribute('readonly', true)
+        taskInput.setAttribute('value', task.name)
+        taskInput.innerText = task.name
+        label.append(taskInput)
+        const editTask = document.createElement('i')
+        editTask.classList.add('bi', 'bi-pencil-square', )
+        const deleteTask = document.createElement('i')
+        deleteTask.classList.add('bi', 'bi-trash')
+        label.after(editTask, deleteTask)
         tasksContainer.appendChild(taskElement)
+
+        editTask.addEventListener('click', e => {
+            const previousElementSibling = e.target.previousElementSibling
+            const span = previousElementSibling.querySelector('span');
+            console.log(span)
+            const input = document.createElement('input');
+            input.type = 'text';
+			input.focus();
+			input.addEventListener('blur', (e) => {
+				input.setAttribute('readonly', true);
+                taskInput.innerText = e.target.value;
+                // saveAndRender()
+			})
+            // const current = e.target;
+            // const prevSibling = current.previousElementSibling
+            // var editTaskItem = document.createElement('input').
+            // prevSibling.append(editTaskItem)
+            // selectedList.tasks = selectedList.tasks.filter(t => t.id !== id)
+        })
+
+        deleteTask.addEventListener('click', e => {
+            const parentElement = e.target.parentElement
+            const id = parentElement.querySelector('input').id
+            selectedList.tasks = selectedList.tasks.filter(t => t.id !== id)
+            parentElement.remove()
+            renderTaskCount(selectedList)
+        })
+        
     })
 }
 
