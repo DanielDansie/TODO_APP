@@ -2,7 +2,7 @@
     --clr-primary: rgb(94, 148, 229);
     --clr-light: #dcdbdb;
     --clr-dark: rgb(66, 58, 58);
-    --clr-warning: rgb(99, 36, 36);
+    --clr-warning: rgb(219, 19, 19);
 }
 
 *,
@@ -13,11 +13,68 @@
 }
 
 body {
-    margin: 0;
-    font-family: "Work Sans", sans-serif;
-    font-weight: 300;
-    font-size: 1.5rem;
-    background-color: var(--clr-primary);
-    color: var(--clr-light);
+  margin: 0;
+  font-family: "Work Sans", sans-serif;
+  font-weight: 300;
+  font-size: 1.5rem;
+  background-color: var(--clr-primary);
+  color: var(--clr-light);
 }
 
+.navbar {
+  margin: 1rem 2rem;
+}
+
+#content {
+  margin: 1rem 2rem;
+}
+
+form {
+  border: 1px solid var(--clr-dark);
+}
+
+li {
+  padding: 1rem;
+  border: 1px solid var(--clr-dark);
+  background-color: white;
+  color: var(--clr-dark);
+}
+
+.active-list {
+  background-color: #fcba03;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.task {
+  color: var(--clr-dark);
+  background-color: white;
+  border: 1px solid black;
+  padding: .5rem;
+  display: flex;
+}
+
+label {
+  padding-left: .8rem;
+}
+
+.bi-pencil-square {
+  display: block;
+  margin-left: auto;
+  margin-right: 1rem; 
+}
+
+.bi-trash {
+  color: var(--clr-warning);
+}
+
+.bi-save {
+  color: rgb(55, 244, 55);
+}
+
+.complete {
+  text-decoration: line-through;
+}

@@ -48,8 +48,6 @@ deleteListButton.addEventListener('click', e => {
     saveAndRender()
 })
 
-
-
 newListForm.addEventListener('submit', e => {
     e.preventDefault()
     const listName = newListInput.value
@@ -105,7 +103,7 @@ function render() {
 }
 
 function renderTasks(selectedList) {
-    selectedList.tasks.forEach(task => {
+    selectedList.tasks.forEach((task, idx, ) => {
         const taskElement = document.importNode(taskTemplate.content, true)
         const checkbox = taskElement.querySelector('input')
         const taskName = task.name
@@ -114,42 +112,65 @@ function renderTasks(selectedList) {
         const label = taskElement.querySelector('label')
         label.htmlFor = task.id
         const taskInput = document.createElement('span')
-        // taskInput.setAttribute('readonly', true)
-        taskInput.setAttribute('value', task.name)
         taskInput.innerText = task.name
         label.append(taskInput)
         const editTask = document.createElement('i')
-        editTask.classList.add('bi', 'bi-pencil-square', )
+        editTask.classList.add('bi', 'bi-pencil-square', 'editSave')
         const deleteTask = document.createElement('i')
         deleteTask.classList.add('bi', 'bi-trash')
         label.after(editTask, deleteTask)
         tasksContainer.appendChild(taskElement)
 
+        checkbox.addEventListener('click', e => {
+            const nextSibling = e.target.nextElementSibling
+            console.log(nextSibling)
+            const span = nextSibling.querySelector('span')
+            if(span.classList == 'complete'){
+                span.classList.remove('complete')
+            }else {
+                span.classList.add('complete')
+            }
+            console.log(span.classList)
+        })
+
         editTask.addEventListener('click', e => {
             const previousElementSibling = e.target.previousElementSibling
             const span = previousElementSibling.querySelector('span');
-            console.log(span)
             const input = document.createElement('input');
             input.type = 'text';
+            input.value = span.textContent;
+            previousElementSibling.insertBefore(input, span)
+            previousElementSibling.removeChild(span);
+            editTask.classList.remove('bi-pencil-square')
+            editTask.classList.add('bi-save')
 			input.focus();
-			input.addEventListener('blur', (e) => {
-				input.setAttribute('readonly', true);
-                taskInput.innerText = e.target.value;
-                // saveAndRender()
-			})
-            // const current = e.target;
-            // const prevSibling = current.previousElementSibling
-            // var editTaskItem = document.createElement('input').
-            // prevSibling.append(editTaskItem)
-            // selectedList.tasks = selectedList.tasks.filter(t => t.id !== id)
+            // if (editTask.classList === 'bi-save') {
+            input.addEventListener('blur', e => {
+                    const parentElement = e.target.parentElement;
+                    // const input = previousElementSibling.querySelector('input')
+                    const span = document.createElement('span');
+                    span.textContent = input.value;
+                    parentElement.insertBefore(span, input)
+                    parentElement.removeChild(input)
+                    var selectedListIndex
+                    lists.forEach((list, idx) => {if (list.id === selectedListId) selectedListIndex = idx})
+                    lists[selectedListIndex].tasks[idx].name = input.value
+                    editTask.classList.remove('bi-save')
+                    editTask.classList.add('bi-pencil-square')
+                    save()
+                })
         })
 
         deleteTask.addEventListener('click', e => {
             const parentElement = e.target.parentElement
             const id = parentElement.querySelector('input').id
+            parentElement.classList.add('animate_fadeOut')
             selectedList.tasks = selectedList.tasks.filter(t => t.id !== id)
-            parentElement.remove()
+            setTimeout (function(){
+                parentElement.remove()
+            , 1000})
             renderTaskCount(selectedList)
+            save()
         })
         
     })
